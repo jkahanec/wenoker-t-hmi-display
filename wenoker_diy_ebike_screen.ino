@@ -6,12 +6,7 @@
 // TFT OBJECT
 TFT_eSPI tft = TFT_eSPI();
 
-// PIN DEFINITIONS (Your working pins)
-#define SENSOR_PIN 17
-#define MODE_PIN 18
-#define SET_PIN 16  // Not used yet, but defined
-#define RESET_PIN 15
-#define VERSION 7
+#define VERSION 8
 
 // --- UI State Management ---
 enum UIState {
@@ -173,7 +168,7 @@ void drawMainUI() {
   tft.drawString(String(currentMPH, 2) + " mph", 10, 10, 2);
   tft.drawString(String(distanceMiles, 2) + " mi", 10, 40, 2);
   tft.drawString(timeString, 10, 70, 2);
-  
+
   // Now reset text padding.
   tft.setTextPadding(0);
 }

@@ -5,7 +5,7 @@
 #define BAT_ADC_PIN (5)
 #define BUTTON1_PIN (0)
 #define BUTTON2_PIN (21)
-#define LED_PIN     (15)
+// #define LED_PIN     (15)
 
 // lcd
 #define LCD_DATA0_PIN (48)
@@ -37,3 +37,9 @@
 #define SDIO_DATA0_PIN (13)
 #define SDIO_CMD_PIN   (11)
 #define SDIO_SCLK_PIN  (12)
+
+// project-specific 
+#define SENSOR_PIN (17)
+#define MODE_PIN (18)
+#define SET_PIN (16)
+#define RESET_PIN (15)
