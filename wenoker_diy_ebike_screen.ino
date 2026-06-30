@@ -35,6 +35,7 @@ long sensorDebounceDelay = 50;
 // --- State Management ---
 bool isPaused = false;
 bool isSleeping = false;
+bool uiLayoutNeedsRedraw = true;
 
 // --- Time Tracking for Pause ---
 unsigned long totalPausedDuration = 0; // Total time spent paused in ms
@@ -182,28 +183,72 @@ void drawSplashScreen()
   tft.print("Initializing...");
 }
 
-// --- Main UI (Stub) ---
 void drawMainUI()
 {
-  // Text padding helps us clear the old text from the screen
-  // but we dont need it for this static text.
-  tft.setTextPadding(0);
+  // --- 1. DRAW STATIC LAYOUT (Only once per screen load) ---
+  if (uiLayoutNeedsRedraw) {
+    // Draw Top Header Bar
+    tft.fillRect(0, 0, 320, 30, TFT_NAVY); // Dark Blue Header
+    
+    // Draw Vertical Divider Line
+    tft.drawLine(160, 30, 160, 240, TFT_DARKGREY);
 
-  tft.setTextColor(TFT_GREEN, TFT_BLACK);
-  tft.setCursor(40, 120);
-  tft.setTextSize(3);
-  tft.print("MAIN UI SCREEN");
+    // Draw Static Labels (Font 2 is a nice small sans-serif)
+    tft.setTextColor(TFT_SILVER, TFT_BLACK); // Grey text, Black background
+    tft.setTextDatum(TC_DATUM); // Top Center alignment
+    
+    // Left Label
+    tft.drawString("TIME", 80, 45, 2); // Centered in left half (0-160)
+    
+    // Right Label
+    tft.drawString("DISTANCE", 240, 45, 2); // Centered in right half (160-320)
 
-  // Now turn on padding for dynamic text.
-  tft.setTextPadding(160);
+    // Top Right Screen Name
+    tft.setTextDatum(TR_DATUM); // Top Right alignment
+    tft.setTextColor(TFT_WHITE, TFT_NAVY);
+    tft.drawString("MAIN", 310, 5, 2);
 
-  tft.setTextSize(2);
-  tft.drawString(String(currentMPH, 2) + " mph", 10, 10, 2);
-  tft.drawString(String(distanceMiles, 2) + " mi", 10, 40, 2);
-  tft.drawString(timeString, 10, 70, 2);
+    uiLayoutNeedsRedraw = false; // Done drawing layout
+  }
 
-  // Now reset text padding.
-  tft.setTextPadding(0);
+  // --- 2. UPDATE DYNAMIC NUMBERS ---
+  
+  // -- PAUSE INDICATOR --
+  tft.setTextDatum(TL_DATUM); // Top Left
+  if (isPaused) {
+    tft.setTextColor(TFT_YELLOW, TFT_NAVY);
+    tft.drawString("PAUSED", 10, 5, 2);
+  } else {
+    // Draw over "PAUSED" with the background color to hide it
+    tft.setTextColor(TFT_NAVY, TFT_NAVY);
+    tft.drawString("PAUSED", 10, 5, 2);
+  }
+
+  // -- BIG METRICS --
+  // We use Middle Center datum to ensure numbers stay centered 
+  // even as they grow from 1 digit to 3 digits.
+  tft.setTextDatum(MC_DATUM); 
+
+  // TIME (Left Side)
+  // Font 7 is a 7-segment display font (like a digital clock) usually built-in.
+  // If Font 7 is too big/glitchy, switch to Font 6 or 4.
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+  tft.setTextPadding(140); // Width to clear previous text
+  tft.drawString(timeString, 80, 130, 7); 
+
+  // DISTANCE (Right Side)
+  // We format distance to 1 decimal place for readability
+  tft.setTextColor(TFT_CYAN, TFT_BLACK); // Cyan pops well against black
+  String distStr = String(distanceMiles, 1);
+  tft.drawString(distStr, 240, 130, 7);
+
+  // Small unit label below the number
+  tft.setTextPadding(0); // Turn off padding for static text
+  tft.setTextColor(TFT_SILVER, TFT_BLACK);
+  tft.drawString("miles", 240, 180, 2);
+
+  // Reset Datum to default just in case
+  tft.setTextDatum(TL_DATUM);
 }
 
 // --- Testing/Debug UI ---
@@ -357,8 +402,12 @@ void toggleUIState()
   {
     currentUIState = UI_STATE_MAIN;
   }
-  // Force a screen clear to avoid artifacts when switching
+  
+  // Force a screen clear
   tft.fillScreen(TFT_BLACK);
+  
+  // TRIGGER A LAYOUT REDRAW
+  uiLayoutNeedsRedraw = true; 
 }
 
 // --- Input Handling Function ---
@@ -432,7 +481,10 @@ void setup()
   delay(2000); // Show splash for 2 seconds
 
   // --- Set initial state
-  currentUIState = UI_STATE_TESTING;
+  currentUIState = UI_STATE_MAIN;
+
+  // for testing
+  // currentUIState = UI_STATE_TESTING;
 
   // --- PinMode Setup ---
   pinMode(SENSOR_PIN, INPUT_PULLUP);
