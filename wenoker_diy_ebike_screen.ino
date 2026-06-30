@@ -6,7 +6,7 @@
 // TFT OBJECT
 TFT_eSPI tft = TFT_eSPI();
 
-#define VERSION 9
+#define VERSION 10
 
 // --- UI State Management ---
 enum UIState
@@ -57,8 +57,12 @@ int lastSensorCountForResume = 0;
 // These are *not* volatile because they are only used inside the main loop()
 static int modePresses = 0;
 static unsigned long firstModePressTime = 0;
-#define MODE_PRESS_WINDOW 2000    // 2-second window to detect 3 presses
-static int lastSeenModeCount = 0; // To detect new presses from the ISR
+#define MODE_PRESS_WINDOW 2000 // 2-second window to detect 3 presses
+// TEMPORARY: the MODE button's wiring is currently unresponsive (raw
+// modeCount never increments, confirmed via serial logging). Triple-pressing
+// SET drives the UI toggle instead until MODE is physically fixed. To revert,
+// swap setCount/lastSeenSetCount back to modeCount/lastSeenModeCount below.
+static int lastSeenSetCount = 0; // To detect new presses from the ISR
 
 // --- RPM Calculation Variables ---
 volatile unsigned long currentPulseTime = 0;
@@ -139,7 +143,7 @@ void IRAM_ATTR onResetPress()
     lastSensorTime = millis();
 
     // Reset mode switching logic
-    lastSeenModeCount = 0;
+    lastSeenSetCount = 0;
     modePresses = 0;
 
     // Reset resume-burst tracking
@@ -463,10 +467,10 @@ void toggleUIState()
 void handleInputs()
 {
   // Check for mode presses
-  // We check if the ISR has incremented modeCount
-  if (modeCount != lastSeenModeCount)
+  // TEMPORARY: reading setCount here instead of modeCount - see note above.
+  if (setCount != lastSeenSetCount)
   {
-    lastSeenModeCount = modeCount; // Acknowledge the press
+    lastSeenSetCount = setCount; // Acknowledge the press
     unsigned long now = millis();
 
     if (modePresses == 0)
